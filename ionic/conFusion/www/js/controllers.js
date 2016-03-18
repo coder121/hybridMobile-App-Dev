@@ -1,6 +1,6 @@
 angular.module('conFusion.controllers', [])
 
-.controller('AppCtrl', function ($scope, $ionicModal, $timeout, $localStorage, $ionicPlatform, $cordovaCamera,$cordovaImagePicker) {
+.controller('AppCtrl', function ($scope, $ionicModal, $timeout, $localStorage, $ionicPlatform, $cordovaCamera, $cordovaImagePicker) {
 
     // With the new view caching in Ionic, Controllers are only called
     // when they are recreated or on app start, instead of every page change.
@@ -98,7 +98,8 @@ angular.module('conFusion.controllers', [])
             $scope.closeRegister();
         }, 1000);
     };
-   $ionicPlatform.ready(function() {
+    
+    $ionicPlatform.ready(function() {
         var options = {
             quality: 50,
             destinationType: Camera.DestinationType.DATA_URL,
@@ -128,7 +129,7 @@ angular.module('conFusion.controllers', [])
            quality: 50
         };
 
-        $scope.selectPicture = function() {
+        $scope.openGallery = function() {
             $cordovaImagePicker.getPictures(imagePickerOptions).then(function (results) {
                 if(results.length > 0)
                     $scope.registration.imgSrc = results[0];
@@ -250,7 +251,7 @@ angular.module('conFusion.controllers', [])
     };
         }])
 
-.controller('DishDetailController', ['$scope', '$stateParams', 'dish', 'menuFactory', 'favoriteFactory', 'baseURL', '$ionicPopover', '$ionicModal', function ($scope, $stateParams, dish, menuFactory, favoriteFactory, baseURL, $ionicPopover, $ionicModal) {
+.controller('DishDetailController', ['$scope', '$stateParams', 'dish', 'menuFactory', 'favoriteFactory', 'baseURL', '$ionicPopover', '$ionicModal', '$ionicPlatform', '$cordovaLocalNotification', '$cordovaToast', function ($scope, $stateParams, dish, menuFactory, favoriteFactory, baseURL, $ionicPopover, $ionicModal, $ionicPlatform, $cordovaLocalNotification, $cordovaToast) {
 
     $scope.baseURL = baseURL;
     $scope.dish = dish;
@@ -278,6 +279,27 @@ angular.module('conFusion.controllers', [])
         console.log("index is " + $scope.dish.id);
         favoriteFactory.addToFavorites($scope.dish.id);
         $scope.closePopover();
+
+        $ionicPlatform.ready(function () {
+            $cordovaLocalNotification.schedule({
+                id: 1,
+                title: "Added Favorite",
+                text: $scope.dish.name
+            }).then(function () {
+                console.log('Added Favorite '+$scope.dish.name);
+            },
+            function () {
+                console.log('Failed to add Notification ');
+            });
+
+            $cordovaToast
+              .show('Added Favorite '+$scope.dish.name, 'long', 'bottom')
+              .then(function (success) {
+                  // success
+              }, function (error) {
+                  // error
+              });
+        });
     };
 
     $scope.commentData = {};
@@ -375,7 +397,7 @@ angular.module('conFusion.controllers', [])
 
 }])
 
-.controller('FavoritesController', ['$scope', 'dishes', 'favorites', 'favoriteFactory', 'baseURL', '$ionicListDelegate', '$ionicPopup', '$ionicLoading', '$timeout', function ($scope, dishes, favorites, favoriteFactory, baseURL, $ionicListDelegate, $ionicPopup, $ionicLoading,$ionicPlatform,$cordovaVibration, $timeout) {
+.controller('FavoritesController', ['$scope', 'dishes', 'favorites', 'favoriteFactory', 'baseURL', '$ionicPlatform', '$ionicListDelegate', '$ionicPopup', '$ionicLoading', '$cordovaVibration', '$timeout', function ($scope, dishes, favorites, favoriteFactory, baseURL, $ionicPlatform, $ionicListDelegate, $ionicPopup, $ionicLoading, $cordovaVibration, $timeout) {
 
     $scope.baseURL = baseURL;
     $scope.shouldShowDelete = false;
@@ -402,7 +424,7 @@ angular.module('conFusion.controllers', [])
             if (res) {
                 console.log('Ok to delete');
                 favoriteFactory.deleteFromFavorites(index);
-                  $ionicPlatform.ready(function() {
+                $ionicPlatform.ready(function() {
                     $cordovaVibration.vibrate(100);
                 });
             } else {
